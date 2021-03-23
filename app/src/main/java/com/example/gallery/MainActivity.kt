@@ -18,8 +18,8 @@ import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
 
-    lateinit var listAdapter: ImagesRecyclerViewAdapter
-    val pathlist = ArrayList<String>()
+    lateinit var listAdapter: AlbumRecyclerViewAdapter
+    val list = ArrayList<Album>()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -27,7 +27,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun init() {
-        listAdapter = ImagesRecyclerViewAdapter(this)
+        listAdapter = AlbumRecyclerViewAdapter(this)
         recycler_view_images.adapter = listAdapter
         recycler_view_images.layoutManager = StaggeredGridLayoutManager(3, StaggeredGridLayoutManager.VERTICAL)
         requestPermissionForGallery()
@@ -64,14 +64,31 @@ class MainActivity : AppCompatActivity() {
         val uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
         val projections = arrayOf(MediaStore.Images.ImageColumns.DATA,
         MediaStore.Images.Media.DISPLAY_NAME, MediaStore.Images.Media.BUCKET_DISPLAY_NAME)
-        contentResolver.query(uri, projections,null, null, null)
+        contentResolver.query(uri, projections,null, null, MediaStore.Images.Media.BUCKET_DISPLAY_NAME)
                 .use {
+                    var firstImage: String
+                    var imageList = ArrayList<String>()
+                    var album: String
+                    var current = ""
                     while(it?.moveToNext() == true)
                     {
-                        pathlist.add(it.getString(it.getColumnIndex(MediaStore.Images.ImageColumns.DATA)))
+                        var image = it.getString(it.getColumnIndex(MediaStore.Images.ImageColumns.DATA))
+                        album = it.getString(it.getColumnIndex(MediaStore.Images.ImageColumns.BUCKET_DISPLAY_NAME))
+
+                        if(current != album)
+                        {
+                            firstImage = image
+                            current =album
+                            var newAlbum = Album(album, firstImage, imageList)
+                            list.add(newAlbum)
+                            imageList.clear()
+                        }
+                        imageList.add(image)
+
                         Log.d("abc", it.getString(it.getColumnIndex(MediaStore.Images.ImageColumns.DATA)))
+                        Log.d("abc", it.getString(it.getColumnIndex(MediaStore.Images.ImageColumns.BUCKET_DISPLAY_NAME)))
                     }
-                    listAdapter.updateList(pathlist)
+                    listAdapter.updateAlbumList(list)
                 }
     }
 }
